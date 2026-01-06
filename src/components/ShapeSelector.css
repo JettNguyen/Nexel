@@ -1,0 +1,39 @@
+.shape-selector {
+  display: flex;
+  gap: 24px;
+  justify-content: center;
+  align-items: center;
+  padding: 32px;
+  margin-top: 5px;
+}
+
+.shape-container {
+  min-width: 120px;
+  min-height: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-card);
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.shape-container:has(.shape-piece:hover:not(.disabled):not(.dragging)) {
+  box-shadow: 0 4px 16px rgba(255, 27, 110, 0.15);
+}
+
+@media (max-width: 500px) {
+  .shape-selector {
+    flex-wrap: wrap;
+    gap: 14px;
+    padding: 10px 8px 4px;
+    margin-top: 0;
+  }
+
+  .shape-container {
+    flex: 1 1 42%;
+    min-width: 96px;
+    min-height: 96px;
+    padding: 4px;
+  }
+}

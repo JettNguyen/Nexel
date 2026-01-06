@@ -1,0 +1,57 @@
+.shape-piece {
+  cursor: grab;
+  user-select: none;
+  touch-action: none;
+  padding: 10px;
+  display: flex;
+  align-items: center;
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.shape-piece:hover:not(.disabled):not(.dragging) {
+  transform: scale(1.02);
+}
+
+.shape-piece:active:not(.disabled) {
+  cursor: grabbing;
+}
+
+.shape-piece.dragging {
+  opacity: 0.9;
+  cursor: grabbing;
+}
+
+.shape-piece.disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.shape-cell {
+  fill: var(--accent);
+  transition: fill 0.2s ease;
+}
+
+.shape-piece.disabled .shape-cell {
+  fill: var(--text-secondary);
+}
+
+.new-piece .shape-piece {
+  animation: pieceFadeIn 0.35s ease;
+}
+
+@keyframes pieceFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 500px) {
+  .shape-piece {
+    padding: 5px;
+  }
+}

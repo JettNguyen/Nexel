@@ -1,0 +1,25 @@
+.score-popup {
+  position: fixed;
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--accent-soft);
+  pointer-events: none;
+  animation: scorePopup 1.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  z-index: 999;
+  text-shadow: 0 2px 8px rgba(255, 128, 180, 0.55);
+}
+
+@keyframes scorePopup {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.5);
+  }
+  20% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.2);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -120%) scale(1);
+  }
+}
