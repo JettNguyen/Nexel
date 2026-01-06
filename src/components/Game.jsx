@@ -26,6 +26,7 @@ export default function Game() {
   const boardWrapperRef = useRef(null);
   const boardElRef = useRef(null);
   const dragOffsetRef = useRef(null);
+  const audioContextRef = useRef(null);
 
   useEffect(() => {
     const updatedShapes = shapes.map(shape => ({
@@ -142,8 +143,11 @@ export default function Game() {
     const hasCompletions = completed.rows.length > 0 || completed.cols.length > 0 || completed.boxes.length > 0;
     let updatedBoard = newBoard;
     let updatedScore = score;
+    let scoreMultiplier = 1;
     
     if (hasCompletions) {
+      const areaCount = completed.rows.length + completed.cols.length + completed.boxes.length;
+      scoreMultiplier = areaCount >= 2 ? 1 + (areaCount - 1) * 0.5 : 1;
       const { board: clearedBoard, clearedCount } = clearCompletedAreas(newBoard, completed);
       const points = calculateScore(clearedCount, completed);
       
@@ -184,7 +188,7 @@ export default function Game() {
     }
 
     if (soundEnabled) {
-      playSound('place');
+      playSound(hasCompletions ? 'score' : 'place', { multiplier: scoreMultiplier });
     }
 
     setHighlightAreas({ rows: [], cols: [], boxes: [] });
@@ -199,21 +203,56 @@ export default function Game() {
     }, 1500);
   };
 
-  const playSound = (type) => {
-    const context = new (window.AudioContext || window.webkitAudioContext)();
-    const oscillator = context.createOscillator();
-    const gainNode = context.createGain();
-    
-    oscillator.connect(gainNode);
-    gainNode.connect(context.destination);
-    
-    if (type === 'place') {
-      oscillator.frequency.value = 440;
-      gainNode.gain.value = 0.1;
+  const ensureAudioContext = () => {
+    if (!audioContextRef.current) {
+      audioContextRef.current = new (window.AudioContext || window.webkitAudioContext)();
     }
-    
-    oscillator.start();
-    oscillator.stop(context.currentTime + 0.1);
+    if (audioContextRef.current.state === 'suspended') {
+      audioContextRef.current.resume();
+    }
+    return audioContextRef.current;
+  };
+
+  const playSound = (type, options = {}) => {
+    const { multiplier = 1 } = options;
+    const context = ensureAudioContext();
+    const now = context.currentTime;
+
+    const playTone = (frequency, duration, delay = 0, volume = 0.08) => {
+      const oscillator = context.createOscillator();
+      const gain = context.createGain();
+
+      oscillator.type = 'sine';
+      oscillator.frequency.setValueAtTime(frequency, now + delay);
+
+      gain.gain.setValueAtTime(0, now + delay);
+      gain.gain.linearRampToValueAtTime(volume, now + delay + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + delay + duration);
+
+      oscillator.connect(gain);
+      gain.connect(context.destination);
+
+      oscillator.start(now + delay);
+      oscillator.stop(now + delay + duration + 0.05);
+    };
+
+    if (type === 'score') {
+      const excitement = Math.min(4, Math.max(1, multiplier));
+      const base = 540 + 40 * excitement; // keeps intervals consonant while rising with combo
+      const volume = Math.min(0.12, 0.07 + 0.012 * excitement);
+
+      // Consonant major triad arpeggio: root, major third, perfect fifth, optional octave
+      playTone(base, 0.22, 0, volume);
+      playTone(base * 1.26, 0.18, 0.08, volume * 0.95);
+      playTone(base * 1.5, 0.16, 0.16, volume * 0.9);
+
+      if (excitement > 2) {
+        playTone(base * 2, 0.12, 0.25, volume * 0.85);
+      }
+      return;
+    }
+
+    playTone(200, 0.14, 0, 0.07);
   };
 
   const handleRestart = () => {
@@ -245,7 +284,19 @@ export default function Game() {
             onClick={() => setSoundEnabled(!soundEnabled)}
             aria-label="Toggle sound"
           >
-            {soundEnabled ? '🔊' : '🔇'}
+            {soundEnabled ? (
+              <svg className="sound-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <path d="M4 9v6h3.5L13 19V5L7.5 9H4z" />
+                <path d="M15.5 8.5a4.5 4.5 0 0 1 0 7" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                <path d="M17.5 6.5a7.5 7.5 0 0 1 0 11" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+              </svg>
+            ) : (
+              <svg className="sound-icon mute-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <path d="M4 9v6h3.5L13 19V5L7.5 9H4z" />
+                <path className="mute-line" d="M16.5 8.5 9.5 15.5" fill="none" strokeWidth="2" />
+                <path className="mute-line" d="M9.5 8.5 16.5 15.5" fill="none" strokeWidth="2" />
+              </svg>
+            )}
           </button>
           <button
             className="sound-toggle"

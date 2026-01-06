@@ -1,18 +1,19 @@
 .shape-selector {
   display: flex;
-  gap: 24px;
   justify-content: center;
   align-items: center;
-  padding: 32px;
+  gap: 16px;
+  padding: 10px;
   margin-top: 5px;
 }
 
 .shape-container {
-  min-width: 120px;
-  min-height: 120px;
   display: flex;
   align-items: center;
   justify-content: center;
+  width: 120px;
+  height: 120px;
+  padding: 6px;
   background: var(--bg-card);
   border-radius: 8px;
   transition: all 0.2s ease;
@@ -25,15 +26,15 @@
 @media (max-width: 500px) {
   .shape-selector {
     flex-wrap: wrap;
-    gap: 14px;
-    padding: 10px 8px 4px;
+    gap: 8px;
+    padding: 6px 6px 4px;
     margin-top: 0;
   }
 
   .shape-container {
-    flex: 1 1 42%;
-    min-width: 96px;
-    min-height: 96px;
+    flex: 1 1 48%;
+    width: 108px;
+    height: 108px;
     padding: 4px;
   }
 }

@@ -1,11 +1,11 @@
 .board {
-  --cell-size: 42px;
+  --cell-size: 38px;
   display: inline-flex;
   flex-direction: column;
   gap: 2px;
-  background: var(--border);
   padding: 3px;
   padding-top: 4px;
+  background: var(--border);
   border-radius: 8px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
 }
@@ -16,14 +16,13 @@
 }
 
 .board-cell {
-  transform: translateY(1px);
-  transform: translateX(1px);
   width: var(--cell-size);
   height: var(--cell-size);
-  background: var(--cell-empty);
-  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
+  background: var(--cell-empty);
   border-radius: 4px;
+  transform: translate(1px, 1px);
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .board-cell.box-0-1,
@@ -74,7 +73,7 @@
 
 @media (max-width: 500px) {
   .board {
-    --cell-size: clamp(30px, calc((100vw - 64px) / 9), 42px);
+    --cell-size: clamp(28px, calc((100vw - 56px) / 9), 38px);
     gap: 1px;
     padding: 2px;
   }

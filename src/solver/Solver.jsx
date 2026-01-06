@@ -364,22 +364,10 @@ export default function Solver() {
         </div>
       </div>
 
-      {gameOver && (
-        <div className="solver-game-over">
-          <p>{solverWon ? 'Board cleared – solver wins!' : 'No valid moves remaining'}</p>
-          <p className="solver-final-score">Final Score: {score}</p>
-        </div>
-      )}
-
       {showNoMovesModal && !solverWon && (
-        <div className="solver-modal-backdrop">
+        <div className="solver-modal-overlay">
           <div className="solver-modal" role="dialog" aria-modal="true" aria-labelledby="solver-modal-title">
-            <div className="solver-modal-header">
-              <h3 id="solver-modal-title">No valid moves</h3>
-              <button className="solver-modal-close" onClick={() => setShowNoMovesModal(false)} aria-label="Close">
-                ×
-              </button>
-            </div>
+            <h3 id="solver-modal-title">No valid moves</h3>
             <p className="solver-modal-body">You can reset the board to keep exploring, or close this to inspect the final state.</p>
             <div className="solver-modal-actions">
               <button className="solver-modal-secondary" onClick={() => setShowNoMovesModal(false)}>Close</button>

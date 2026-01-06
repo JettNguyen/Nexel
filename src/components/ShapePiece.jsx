@@ -4,14 +4,19 @@ import './ShapePiece.css';
 export default function ShapePiece({ shape, disabled, onDragStart, onDragEnd, isDragging, position, offset }) {
   const computeSizes = () => {
     if (typeof window === 'undefined') {
-      return { shelfCellSize: 32, shelfGap: 2, dragCellSize: 38, dragGap: 1 };
+      return { shelfCellSize: 18, shelfGap: 2, dragCellSize: 34, dragGap: 2 };
     }
 
-    const boardCell = Math.min(42, Math.max(30, (window.innerWidth - 64) / 9));
-    const shelfCellSize = Math.max(24, Math.round(boardCell * 0.8));
-    const dragCellSize = Math.max(28, Math.round(boardCell * 0.9));
+    const isMobile = window.innerWidth <= 500;
+    const boardCell = Math.min(38, Math.max(28, (window.innerWidth - 56) / 9));
 
-    return { shelfCellSize, shelfGap: 4, dragCellSize, dragGap: 3 };
+    const shelfScale = isMobile ? 0.6 : 0.7;
+    const dragScale = isMobile ? 0.95 : 0.9;
+
+    const shelfCellSize = Math.max(isMobile ? 20 : 15, Math.round(boardCell * shelfScale));
+    const dragCellSize = Math.max(isMobile ? 30 : 28, Math.round(boardCell * dragScale));
+
+    return { shelfCellSize, shelfGap: isMobile ? 4 : 3, dragCellSize, dragGap: 2 };
   };
 
   const [sizes, setSizes] = useState(computeSizes);
@@ -47,8 +52,9 @@ export default function ShapePiece({ shape, disabled, onDragStart, onDragEnd, is
       e.preventDefault();
       e.stopPropagation();
       const rect = pieceRef.current.getBoundingClientRect();
-      const offsetX = rect.width / 2;
-      const offsetY = rect.height / 2;
+      const isNarrow = window.innerWidth <= 640;
+      const offsetX = rect.width / 2 + 5;
+      const offsetY = isNarrow ? rect.height * 1.5 : rect.height / 2;
       if (onDragStart) {
         onDragStart(shape, { x: offsetX, y: offsetY });
       }
@@ -67,6 +73,13 @@ export default function ShapePiece({ shape, disabled, onDragStart, onDragEnd, is
   const width = (maxCol + 1) * (cellSize + gap) - gap;
   const height = (maxRow + 1) * (cellSize + gap) - gap;
 
+  const viewportWidth = typeof window !== 'undefined' ? window.innerWidth : 1200;
+  const maxShelfDim = viewportWidth <= 500 ? 96 : 104; // fit comfortably inside padded container
+  const targetDim = isDragging ? Infinity : maxShelfDim;
+  const scale = Math.min(1, targetDim / Math.max(width, height));
+  const renderWidth = scale < 1 ? width * scale : width;
+  const renderHeight = scale < 1 ? height * scale : height;
+
   const style = isDragging && position && position.x !== null && position.y !== null
     ? {
         position: 'fixed',
@@ -84,7 +97,11 @@ export default function ShapePiece({ shape, disabled, onDragStart, onDragEnd, is
       className={`shape-piece ${disabled ? 'disabled' : ''} ${isDragging ? 'dragging' : ''}`}
       style={style}
     >
-      <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`}>
+      <svg
+        width={renderWidth}
+        height={renderHeight}
+        viewBox={`0 0 ${width} ${height}`}
+      >
         {shape.cells.map(([row, col], index) => {
           const x = col * (cellSize + gap);
           const y = row * (cellSize + gap);
