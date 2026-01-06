@@ -1,6 +1,6 @@
 # Nexel
 
-A polished strategic block placement puzzle game built with React and Vite.
+A strategic block placement puzzle game built with React and Vite.
 
 ## Features
 
@@ -16,7 +16,6 @@ A polished strategic block placement puzzle game built with React and Vite.
   - Survival (maximize board openness)
   - Hybrid (balanced approach)
 - **Auto-play** with adjustable speed
-- **Dark Theme** with refined pink accents
 - **Sound Toggle** for placement feedback
 
 ## How to Play
