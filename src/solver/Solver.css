@@ -74,7 +74,10 @@
 }
 
 .solver-board {
+  position: relative;
+  display: inline-block;
   margin-bottom: 32px;
+  overflow: visible;
 }
 
 .solver-shapes {
@@ -467,7 +470,7 @@
     justify-content: center;
     width: 100%;
     padding: 0 8px 12px;
-    overflow: hidden;
+    overflow: visible;
   }
 
   .solver-board .board {

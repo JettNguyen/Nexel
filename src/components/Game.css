@@ -119,6 +119,7 @@
 
 .game-board {
   position: relative;
+  overflow: visible;
 }
 
 .shape-selector {
@@ -247,6 +248,20 @@
 
 .restart-button:active {
   transform: translateY(0);
+}
+
+.restart-button.secondary {
+  margin-top: 12px;
+  background: transparent;
+  color: var(--accent);
+  border: 1px solid var(--accent);
+  box-shadow: none;
+}
+
+.restart-button.secondary:hover {
+  background: rgba(255, 59, 108, 0.12);
+  color: white;
+  transform: scale(1.01);
 }
 
 @media (max-width: 500px) {

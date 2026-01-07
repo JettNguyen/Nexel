@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Board from '../components/Board';
 import ScorePopup from '../components/ScorePopup';
+import ComboCinematic from '../components/ComboCinematic';
 import { createEmptyBoard, placeShape, findCompletedAreas, clearCompletedAreas, hasAnyValidPlacement, isBoardEmpty } from '../logic/board';
 import { getRandomShapes } from '../logic/shapes';
 import { STRATEGIES } from './strategies';
+import { computeComboVisuals } from '../utils/combo';
 import './Solver.css';
 
 export default function Solver() {
@@ -22,12 +24,14 @@ export default function Solver() {
   const [showNoMovesModal, setShowNoMovesModal] = useState(false);
   const [strategyOpen, setStrategyOpen] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(false);
+  const [comboEffect, setComboEffect] = useState(null);
 
   const intervalRef = useRef(null);
   const boardRef = useRef(null);
   const shapeRefs = useRef({});
   const strategySelectRef = useRef(null);
   const audioContextRef = useRef(null);
+  const comboTimeoutRef = useRef(null);
 
   const renderShapeSvg = (shape, { boardScale = false, cellSize: overrideCellSize } = {}) => {
     const cellSize = boardScale ? (overrideCellSize || 42) : 16;
@@ -88,9 +92,9 @@ export default function Solver() {
     );
   };
 
-  const baseDelay = 200;
+  const baseDelay = 800; // make 1x significantly slower so playback feels deliberate
   const speedDelay = baseDelay / speedMultiplier;
-  const animationDuration = Math.max(280, speedDelay * 0.7);
+  const animationDuration = Math.max(100, speedDelay * 0.7);
 
   const boardCellSize = boardRef.current ? boardRef.current.getBoundingClientRect().width / 9 : 42;
 
@@ -106,14 +110,45 @@ export default function Solver() {
   }, []);
 
   useEffect(() => {
-    if (!isPlaying || gameOver) return;
+    if (intervalRef.current) {
+      clearTimeout(intervalRef.current);
+      intervalRef.current = null;
+    }
 
-    const timeout = setTimeout(() => {
+    if (!isPlaying || gameOver) {
+      return undefined;
+    }
+
+    intervalRef.current = setTimeout(() => {
       executeNextMove();
     }, speedDelay);
 
-    return () => clearTimeout(timeout);
+    return () => {
+      if (intervalRef.current) {
+        clearTimeout(intervalRef.current);
+        intervalRef.current = null;
+      }
+    };
   }, [isPlaying, speedDelay, board, shapes, strategy, gameOver]);
+
+  useEffect(() => () => {
+    if (comboTimeoutRef.current) {
+      clearTimeout(comboTimeoutRef.current);
+    }
+  }, []);
+
+  const triggerComboEffect = (areaCount, multiplier, visuals = null) => {
+    const tier = areaCount >= 4 ? 'ultra' : areaCount === 3 ? 'mega' : 'double';
+    setComboEffect({
+      tier,
+      multiplier,
+      bursts: visuals?.bursts ?? [],
+    });
+    if (comboTimeoutRef.current) {
+      clearTimeout(comboTimeoutRef.current);
+    }
+    comboTimeoutRef.current = setTimeout(() => setComboEffect(null), 1600);
+  };
 
   const executeNextMove = () => {
     if (!hasAnyValidPlacement(board, shapes)) {
@@ -180,6 +215,13 @@ export default function Solver() {
           setBoard(clearedBoard);
           setScore(prev => prev + points);
           addScorePopup(points, popupX, popupY);
+
+          if (areaCount >= 2) {
+            const comboVisual = computeComboVisuals(boardRect, completed, {
+              fallbackPoint: { x: popupX, y: popupY },
+            });
+            triggerComboEffect(areaCount, scoreMultiplier, comboVisual);
+          }
         } else {
           setBoard(newBoard);
         }
@@ -196,13 +238,10 @@ export default function Solver() {
           return;
         }
 
-        const remainingShapes = shapes.filter(s => s.id !== shape.id);
-
-        if (remainingShapes.length === 0) {
-          setShapes(getRandomShapes(3));
-        } else {
-          setShapes(remainingShapes);
-        }
+        setShapes(prev => {
+          const filtered = prev.filter(s => s.id !== shape.id);
+          return filtered.length === 0 ? getRandomShapes(3) : filtered;
+        });
 
         setMoveCount(prev => prev + 1);
         setHighlightCells([]);
@@ -221,6 +260,14 @@ export default function Solver() {
     setHighlightCells([]);
     setScorePopups([]);
     setShowNoMovesModal(false);
+    setComboEffect(null);
+    if (comboTimeoutRef.current) {
+      clearTimeout(comboTimeoutRef.current);
+    }
+    if (intervalRef.current) {
+      clearTimeout(intervalRef.current);
+      intervalRef.current = null;
+    }
   };
 
   const handleStep = () => {
@@ -272,33 +319,33 @@ export default function Solver() {
     };
 
     if (type === 'score') {
-      const base = 523.25; // C5 - consistent base key
+      const base = 523.25; // C5
       const excitement = Math.min(4, Math.max(1, multiplier));
       const volume = Math.min(0.14, 0.07 + 0.015 * excitement);
 
-      // All chimes in C major - add more notes as score increases
-      // Base (90 pts): C5 + E5
+      // in C major
+      // base (90 pts): C5 + E5
       playTone(base, 0.22, 0, volume);
       playTone(base * 1.25, 0.18, 0.08, volume * 0.95);
       
-      // 135+ pts: Add G5
+      // 135+ pts: add G5
       if (excitement >= 1.5) {
         playTone(base * 1.5, 0.16, 0.16, volume * 0.9);
       }
       
-      // 225+ pts: Add C6
+      // 225+ pts: add C6
       if (excitement >= 2.5) {
         playTone(base * 2, 0.14, 0.25, volume * 0.85);
       }
       
-      // 315+ pts: Add G6
+      // 315+ pts: add G6
       if (excitement >= 3.5) {
         playTone(base * 3, 0.12, 0.35, volume * 0.8);
       }
       return;
     }
 
-    // Placement sound: Low G3 (196 Hz) - over 2 octaves below score chimes for clear separation
+    // placement sound: G3 (196 Hz)
     playTone(196, 0.14, 0, 0.07);
   };
 
@@ -326,6 +373,7 @@ export default function Solver() {
 
       <div className="solver-board" ref={boardRef}>
         <Board board={board} highlightCells={highlightCells} />
+        <ComboCinematic combo={comboEffect} />
         {scorePopups.map(popup => (
           <ScorePopup
             key={popup.id}
@@ -439,7 +487,7 @@ export default function Solver() {
           <input
             type="range"
             min="0.5"
-            max="4"
+            max="5"
             step="0.1"
             value={speedMultiplier}
             onChange={(e) => setSpeedMultiplier(Number(e.target.value))}

@@ -3,8 +3,8 @@
   z-index: 999;
   font-size: 32px;
   font-weight: 700;
-  color: var(--accent-soft);
-  text-shadow: 0 2px 8px rgba(255, 128, 180, 0.55);
+  color: #ffd7f0;
+  text-shadow: 0 2px 15px rgba(246, 53, 133, 0.9);
   pointer-events: none;
   animation: scorePopup 1.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }

@@ -2,10 +2,15 @@ import React, { useState, useEffect, useRef } from 'react';
 import Board from './Board';
 import ShapeSelector from './ShapeSelector';
 import ScorePopup from './ScorePopup';
+import ComboCinematic from './ComboCinematic';
+import ReplayViewer from './ReplayViewer';
 import { createEmptyBoard, canPlaceShape, placeShape, findCompletedAreas, clearCompletedAreas, hasAnyValidPlacement, getAllValidPlacements, isBoardEmpty } from '../logic/board';
 import { getRandomShapes } from '../logic/shapes';
 import { calculateScore, getHighScore, setHighScore } from '../logic/scoring';
+import { computeComboVisuals } from '../utils/combo';
 import './Game.css';
+
+const cloneBoard = (grid) => grid.map(row => [...row]);
 
 export default function Game() {
   const [board, setBoard] = useState(createEmptyBoard());
@@ -22,11 +27,16 @@ export default function Game() {
   const [highlightAreas, setHighlightAreas] = useState({ rows: [], cols: [], boxes: [] });
   const [scorePopups, setScorePopups] = useState([]);
   const [soundEnabled, setSoundEnabled] = useState(false);
+  const [comboEffect, setComboEffect] = useState(null);
+  const [replayMoves, setReplayMoves] = useState([]);
+  const [showReplay, setShowReplay] = useState(false);
+  const [suppressGameOver, setSuppressGameOver] = useState(false);
   
   const boardWrapperRef = useRef(null);
   const boardElRef = useRef(null);
   const dragOffsetRef = useRef(null);
   const audioContextRef = useRef(null);
+  const comboTimeoutRef = useRef(null);
 
   useEffect(() => {
     const updatedShapes = shapes.map(shape => ({
@@ -44,7 +54,7 @@ export default function Game() {
 
     const movesAvailable = updatedShapes.length > 0 && hasAnyValidPlacement(board, updatedShapes);
 
-    if (!gameWon && !gameOver) {
+    if (!gameWon && !gameOver && !suppressGameOver) {
       if (!movesAvailable) {
         setNoMoves(true);
         setGameOver(true);
@@ -56,7 +66,44 @@ export default function Game() {
         setNoMoves(false);
       }
     }
-  }, [board, shapes, gameWon, gameOver, score, highScore]);
+  }, [board, shapes, gameWon, gameOver, score, highScore, suppressGameOver]);
+
+  useEffect(() => () => {
+    if (comboTimeoutRef.current) {
+      clearTimeout(comboTimeoutRef.current);
+    }
+  }, []);
+
+  const triggerComboEffect = (areaCount, multiplier, visuals = null) => {
+    const tier = areaCount >= 4 ? 'ultra' : areaCount === 3 ? 'mega' : 'double';
+    setComboEffect({
+      tier,
+      multiplier,
+      bursts: visuals?.bursts ?? [],
+    });
+    if (comboTimeoutRef.current) {
+      clearTimeout(comboTimeoutRef.current);
+    }
+    comboTimeoutRef.current = setTimeout(() => setComboEffect(null), 1600);
+  };
+
+  const recordReplayFrame = ({ boardState, shape, row, col, points, cleared, scoreAfter, areaCount, multiplier, comboBursts = null }) => {
+    const placedCells = shape.cells.map(([dr, dc]) => [row + dr, col + dc]);
+    setReplayMoves(prev => ([
+      ...prev,
+      {
+        id: Date.now() + Math.random(),
+        board: cloneBoard(boardState),
+        placedCells,
+        points,
+        scoreAfter,
+        comboTier: areaCount >= 2 ? (areaCount >= 4 ? 'ultra' : areaCount === 3 ? 'mega' : 'double') : null,
+        multiplier,
+        clearedSummary: cleared,
+        comboBursts,
+      }
+    ]));
+  };
 
   const handleDragStart = (shape, offset) => {
     dragOffsetRef.current = offset;
@@ -137,16 +184,18 @@ export default function Game() {
   };
 
   const handlePlacement = (shape, row, col, boardRect) => {
+    setSuppressGameOver(false);
     const newBoard = placeShape(board, shape, row, col);
     const completed = findCompletedAreas(newBoard);
-    
-    const hasCompletions = completed.rows.length > 0 || completed.cols.length > 0 || completed.boxes.length > 0;
+    const areaCount = completed.rows.length + completed.cols.length + completed.boxes.length;
+    const hasCompletions = areaCount > 0;
     let updatedBoard = newBoard;
     let updatedScore = score;
     let scoreMultiplier = 1;
+    let pointsEarned = 0;
+    let comboVisual = null;
     
     if (hasCompletions) {
-      const areaCount = completed.rows.length + completed.cols.length + completed.boxes.length;
       scoreMultiplier = areaCount >= 2 ? 1 + (areaCount - 1) * 0.5 : 1;
       const { board: clearedBoard, clearedCount } = clearCompletedAreas(newBoard, completed);
       const points = calculateScore(clearedCount, completed);
@@ -158,12 +207,36 @@ export default function Game() {
       addScorePopup(points, popupX, popupY);
       updatedBoard = clearedBoard;
       updatedScore = score + points;
+      pointsEarned = points;
       setBoard(clearedBoard);
       setScore(updatedScore);
+
+      if (areaCount >= 2) {
+        comboVisual = computeComboVisuals(boardRect, completed, {
+          fallbackPoint: { x: popupX, y: popupY },
+        });
+        triggerComboEffect(areaCount, scoreMultiplier, comboVisual);
+      }
     } else {
       updatedBoard = newBoard;
       setBoard(newBoard);
     }
+
+    recordReplayFrame({
+      boardState: updatedBoard,
+      shape,
+      row,
+      col,
+      points: pointsEarned,
+      cleared: hasCompletions ? completed : null,
+      scoreAfter: updatedScore,
+      areaCount,
+      multiplier: scoreMultiplier,
+      comboBursts: comboVisual?.bursts?.map(({ position, sizeRatio }) => ({
+        position,
+        sizeRatio,
+      })) ?? null,
+    });
 
     if (isBoardEmpty(updatedBoard)) {
       setGameWon(true);
@@ -203,6 +276,12 @@ export default function Game() {
     }, 1500);
   };
 
+  const handleReplayClose = () => {
+    setShowReplay(false);
+    setGameOver(false);
+    setSuppressGameOver(true);
+  };
+
   const ensureAudioContext = () => {
     if (!audioContextRef.current) {
       audioContextRef.current = new (window.AudioContext || window.webkitAudioContext)();
@@ -237,33 +316,33 @@ export default function Game() {
     };
 
     if (type === 'score') {
-      const base = 523.25; // C5 - consistent base key
+      const base = 523.25; // C5
       const excitement = Math.min(4, Math.max(1, multiplier));
       const volume = Math.min(0.14, 0.07 + 0.015 * excitement);
 
-      // All chimes in C major - add more notes as score increases
-      // Base (90 pts): C5 + E5
+      // in C major
+      // base (90 pts): C5 + E5
       playTone(base, 0.22, 0, volume);
       playTone(base * 1.25, 0.18, 0.08, volume * 0.95);
       
-      // 135+ pts: Add G5
+      // 135+ pts: add G5
       if (excitement >= 1.5) {
         playTone(base * 1.5, 0.16, 0.16, volume * 0.9);
       }
       
-      // 225+ pts: Add C6
+      // 225+ pts: add C6
       if (excitement >= 2.5) {
         playTone(base * 2, 0.14, 0.25, volume * 0.85);
       }
       
-      // 315+ pts: Add G6
+      // 315+ pts: add G6
       if (excitement >= 3.5) {
         playTone(base * 3, 0.12, 0.35, volume * 0.8);
       }
       return;
     }
 
-    // Placement sound: Low G3 (196 Hz) - over 2 octaves below score chimes for clear separation
+    // placement sound: G3 (196 Hz)
     playTone(196, 0.14, 0, 0.07);
   };
 
@@ -280,6 +359,13 @@ export default function Game() {
     setHighlightCells([]);
     setScorePopups([]);
     setHighlightAreas({ rows: [], cols: [], boxes: [] });
+    setReplayMoves([]);
+    setShowReplay(false);
+    setComboEffect(null);
+    setSuppressGameOver(false);
+    if (comboTimeoutRef.current) {
+      clearTimeout(comboTimeoutRef.current);
+    }
     setTimeout(() => setResetting(false), 450);
   };
 
@@ -337,6 +423,7 @@ export default function Game() {
           highlightAreas={highlightAreas}
           boardRef={boardElRef}
         />
+        <ComboCinematic combo={comboEffect} />
         {scorePopups.map(popup => (
           <ScorePopup
             key={popup.id}
@@ -371,8 +458,20 @@ export default function Game() {
             <button className="restart-button" onClick={handleRestart}>
               {gameWon ? 'Play Again' : 'Reset Board'}
             </button>
+            {replayMoves.length > 0 && (
+              <button className="restart-button secondary" onClick={() => setShowReplay(true)}>
+                Watch Replay
+              </button>
+            )}
           </div>
         </div>
+      )}
+
+      {showReplay && (
+        <ReplayViewer
+          moves={replayMoves}
+          onClose={handleReplayClose}
+        />
       )}
     </div>
   );

@@ -1,0 +1,136 @@
+.combo-cinematic {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 40;
+  overflow: visible;
+}
+
+.combo-cinematic__burst {
+  position: absolute;
+  left: var(--combo-x, 50%);
+  top: var(--combo-y, 50%);
+  width: var(--combo-size, 260px);
+  height: var(--combo-size, 260px);
+  transform: translate(-50%, -50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.combo-cinematic__rings {
+  position: absolute;
+  inset: 0;
+}
+
+.combo-cinematic__rings span {
+  position: absolute;
+  inset: 0;
+  border: 2px solid rgba(255, 255, 255, 0.75);
+  border-radius: 50%;
+  animation: combo-ring 1.4s ease-out forwards;
+}
+
+.combo-cinematic__rings span:nth-child(2) {
+  opacity: 0.6;
+  animation-delay: 0.08s;
+}
+
+.combo-cinematic__rings span:nth-child(3) {
+  opacity: 0.35;
+  animation-delay: 0.16s;
+}
+
+.combo-cinematic__flare {
+  position: absolute;
+  inset: -18%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 59, 108, 0.35), rgba(255, 59, 108, 0));
+  mix-blend-mode: screen;
+  filter: blur(8px);
+  animation: combo-flare 1.2s ease-out forwards;
+}
+
+.combo-cinematic__label {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translate(-50%, -120%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 6px 14px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: white;
+  background: rgba(20, 20, 35, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 999px;
+  box-shadow: 0 0 32px rgba(255, 59, 108, 0.45);
+  font-size: 12px;
+  animation: combo-label 1.4s ease-out forwards;
+  z-index: 2;
+}
+
+.combo-cinematic__label strong {
+  font-size: 22px;
+  letter-spacing: 0.02em;
+  color: #ffd7f0;
+}
+
+.combo-cinematic.combo-mega .combo-cinematic__label {
+  background: rgba(20, 10, 40, 0.78);
+  border-color: rgba(153, 97, 255, 0.6);
+  box-shadow: 0 0 38px rgba(153, 97, 255, 0.5);
+}
+
+.combo-cinematic.combo-ultra .combo-cinematic__label {
+  background: rgba(10, 30, 60, 0.78);
+  border-color: rgba(90, 225, 255, 0.7);
+  box-shadow: 0 0 42px rgba(90, 225, 255, 0.6);
+}
+
+@keyframes combo-ring {
+  0% {
+    transform: scale(0.35);
+    opacity: 0;
+  }
+  25% {
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1.5);
+    opacity: 0;
+  }
+}
+
+@keyframes combo-flare {
+  0% {
+    transform: scale(0.7);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(1.3);
+    opacity: 0;
+  }
+}
+
+@keyframes combo-label {
+  0% {
+    transform: translate(-50%, -120%) scale(0.7);
+    opacity: 0;
+  }
+  25% {
+    transform: translate(-50%, -120%) scale(1);
+    opacity: 1;
+  }
+  80% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-50%, -120%) scale(0.9);
+    opacity: 0;
+  }
+}
