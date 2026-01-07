@@ -237,22 +237,34 @@ export default function Game() {
     };
 
     if (type === 'score') {
+      const base = 523.25; // C5 - consistent base key
       const excitement = Math.min(4, Math.max(1, multiplier));
-      const base = 540 + 40 * excitement; // keeps intervals consonant while rising with combo
-      const volume = Math.min(0.12, 0.07 + 0.012 * excitement);
+      const volume = Math.min(0.14, 0.07 + 0.015 * excitement);
 
-      // Consonant major triad arpeggio: root, major third, perfect fifth, optional octave
+      // All chimes in C major - add more notes as score increases
+      // Base (90 pts): C5 + E5
       playTone(base, 0.22, 0, volume);
-      playTone(base * 1.26, 0.18, 0.08, volume * 0.95);
-      playTone(base * 1.5, 0.16, 0.16, volume * 0.9);
-
-      if (excitement > 2) {
-        playTone(base * 2, 0.12, 0.25, volume * 0.85);
+      playTone(base * 1.25, 0.18, 0.08, volume * 0.95);
+      
+      // 135+ pts: Add G5
+      if (excitement >= 1.5) {
+        playTone(base * 1.5, 0.16, 0.16, volume * 0.9);
+      }
+      
+      // 225+ pts: Add C6
+      if (excitement >= 2.5) {
+        playTone(base * 2, 0.14, 0.25, volume * 0.85);
+      }
+      
+      // 315+ pts: Add G6
+      if (excitement >= 3.5) {
+        playTone(base * 3, 0.12, 0.35, volume * 0.8);
       }
       return;
     }
 
-    playTone(200, 0.14, 0, 0.07);
+    // Placement sound: Low G3 (196 Hz) - over 2 octaves below score chimes for clear separation
+    playTone(196, 0.14, 0, 0.07);
   };
 
   const handleRestart = () => {

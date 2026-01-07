@@ -11,32 +11,29 @@ export function greedyStrategy(board, shapes) {
     for (const { row, col } of placements) {
       const testBoard = placeShape(board, shape, row, col);
       const completed = findCompletedAreas(testBoard);
+      const { clearedCount } = clearCompletedAreas(testBoard, completed);
+      const score = calculateScore(clearedCount, completed);
       
-      const hasCompletions = completed.rows.length > 0 || completed.cols.length > 0 || completed.boxes.length > 0;
-      
-      if (hasCompletions) {
-        const { clearedCount } = clearCompletedAreas(testBoard, completed);
-        const score = calculateScore(clearedCount, completed);
-        
-        if (score > bestScore) {
-          bestScore = score;
-          bestMove = { shape, row, col, score };
-        }
+      // Greedy: Always go for the highest immediate score
+      if (score > bestScore) {
+        bestScore = score;
+        bestMove = { shape, row, col, score };
       }
     }
   }
 
-  if (bestMove) return bestMove;
-
-  for (const shape of shapes) {
-    const placements = getAllValidPlacements(board, shape);
-    if (placements.length > 0) {
-      const placement = placements[Math.floor(Math.random() * placements.length)];
-      return { shape, row: placement.row, col: placement.col, score: 0 };
+  // If no scoring moves, pick any valid placement
+  if (!bestMove) {
+    for (const shape of shapes) {
+      const placements = getAllValidPlacements(board, shape);
+      if (placements.length > 0) {
+        const placement = placements[0];
+        return { shape, row: placement.row, col: placement.col, score: 0 };
+      }
     }
   }
 
-  return null;
+  return bestMove;
 }
 
 export function survivalStrategy(board, shapes) {
@@ -157,8 +154,8 @@ function calculateBoardOpenness(board) {
 }
 
 export const STRATEGIES = {
-  greedy: { name: 'Greedy', fn: greedyStrategy },
-  survival: { name: 'Survival', fn: survivalStrategy },
+  greedy: { name: 'Score+', fn: greedyStrategy },
+  survival: { name: 'Life+', fn: survivalStrategy },
   hybrid: { name: 'Hybrid', fn: hybridStrategy },
-  win: { name: 'Win Focus', fn: winStrategy },
+  win: { name: 'Win', fn: winStrategy },
 };
