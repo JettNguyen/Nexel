@@ -1,0 +1,34 @@
+export const BREAKPOINTS = {
+  MOBILE: 500,
+  NARROW: 640,
+  SMALL: 768,
+  MEDIUM: 1024,
+  LARGE: 1200,
+};
+
+export const BOARD = {
+  SIZE: 9,
+  CELL_COUNT: 81,
+};
+
+export const GAME = {
+  SHAPES_PER_BATCH: 3,
+  POINTS_PER_CELL: 10,
+  RESET_ANIMATION_DURATION: 450,
+  COMBO_FADE_DURATION: 1600,
+  SCORE_POPUP_DURATION: 1500,
+};
+
+export const SOLVER = {
+  BASE_DELAY: 800,
+  MIN_ANIMATION_DURATION: 100,
+  SHAPES_PER_BATCH: 3,
+};
+
+export const SOUND = {
+  ENABLED_BY_DEFAULT: false,
+};
+
+export const STORAGE_KEYS = {
+  HIGH_SCORE: 'nexel_high_score',
+};

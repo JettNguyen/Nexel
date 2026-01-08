@@ -1,3 +1,5 @@
+import { GAME } from '../utils/constants.js';
+
 export const SHAPES = [
   [[0, 0]],
   [[0, 0], [0, 1]],
@@ -32,7 +34,7 @@ export const SHAPES = [
   [[0, 0], [1, 0], [2, 0], [3, 0], [4, 0]],
 ];
 
-export function getRandomShapes(count = 3) {
+export function getRandomShapes(count = GAME.SHAPES_PER_BATCH) {
   const shapes = [];
   for (let i = 0; i < count; i++) {
     const randomIndex = Math.floor(Math.random() * SHAPES.length);

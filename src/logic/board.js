@@ -1,4 +1,6 @@
-export const BOARD_SIZE = 9;
+import { BOARD } from '../utils/constants.js';
+
+export const BOARD_SIZE = BOARD.SIZE;
 
 export function createEmptyBoard() {
   return Array(BOARD_SIZE).fill(null).map(() => Array(BOARD_SIZE).fill(false));

@@ -1,11 +1,17 @@
 import React, { useState, useEffect, useRef } from 'react';
+
 import Board from '../components/Board';
-import ScorePopup from '../components/ScorePopup';
 import ComboCinematic from '../components/ComboCinematic';
-import { createEmptyBoard, placeShape, findCompletedAreas, clearCompletedAreas, hasAnyValidPlacement, isBoardEmpty } from '../logic/board';
+import ScorePopup from '../components/ScorePopup';
+
+import { clearCompletedAreas, createEmptyBoard, findCompletedAreas, hasAnyValidPlacement, isBoardEmpty, placeShape } from '../logic/board';
 import { getRandomShapes } from '../logic/shapes';
+
 import { STRATEGIES } from './strategies';
+
 import { computeComboVisuals } from '../utils/combo';
+import { playSound } from '../utils/sound';
+
 import './Solver.css';
 
 export default function Solver() {
@@ -30,7 +36,6 @@ export default function Solver() {
   const boardRef = useRef(null);
   const shapeRefs = useRef({});
   const strategySelectRef = useRef(null);
-  const audioContextRef = useRef(null);
   const comboTimeoutRef = useRef(null);
 
   const renderShapeSvg = (shape, { boardScale = false, cellSize: overrideCellSize } = {}) => {
@@ -92,7 +97,7 @@ export default function Solver() {
     );
   };
 
-  const baseDelay = 800; // make 1x significantly slower so playback feels deliberate
+  const baseDelay = 800;
   const speedDelay = baseDelay / speedMultiplier;
   const animationDuration = Math.max(100, speedDelay * 0.7);
 
@@ -283,70 +288,6 @@ export default function Solver() {
     setTimeout(() => {
       setScorePopups(prev => prev.filter(p => p.id !== id));
     }, 1500);
-  };
-
-  const ensureAudioContext = () => {
-    if (!audioContextRef.current) {
-      audioContextRef.current = new (window.AudioContext || window.webkitAudioContext)();
-    }
-    if (audioContextRef.current.state === 'suspended') {
-      audioContextRef.current.resume();
-    }
-    return audioContextRef.current;
-  };
-
-  const playSound = (type, options = {}) => {
-    const { multiplier = 1 } = options;
-    const context = ensureAudioContext();
-    const now = context.currentTime;
-
-    const playTone = (frequency, duration, delay = 0, volume = 0.08) => {
-      const oscillator = context.createOscillator();
-      const gain = context.createGain();
-
-      oscillator.type = 'sine';
-      oscillator.frequency.setValueAtTime(frequency, now + delay);
-
-      gain.gain.setValueAtTime(0, now + delay);
-      gain.gain.linearRampToValueAtTime(volume, now + delay + 0.02);
-      gain.gain.exponentialRampToValueAtTime(0.001, now + delay + duration);
-
-      oscillator.connect(gain);
-      gain.connect(context.destination);
-
-      oscillator.start(now + delay);
-      oscillator.stop(now + delay + duration + 0.05);
-    };
-
-    if (type === 'score') {
-      const base = 523.25; // C5
-      const excitement = Math.min(4, Math.max(1, multiplier));
-      const volume = Math.min(0.14, 0.07 + 0.015 * excitement);
-
-      // in C major
-      // base (90 pts): C5 + E5
-      playTone(base, 0.22, 0, volume);
-      playTone(base * 1.25, 0.18, 0.08, volume * 0.95);
-      
-      // 135+ pts: add G5
-      if (excitement >= 1.5) {
-        playTone(base * 1.5, 0.16, 0.16, volume * 0.9);
-      }
-      
-      // 225+ pts: add C6
-      if (excitement >= 2.5) {
-        playTone(base * 2, 0.14, 0.25, volume * 0.85);
-      }
-      
-      // 315+ pts: add G6
-      if (excitement >= 3.5) {
-        playTone(base * 3, 0.12, 0.35, volume * 0.8);
-      }
-      return;
-    }
-
-    // placement sound: G3 (196 Hz)
-    playTone(196, 0.14, 0, 0.07);
   };
 
   return (

@@ -1,16 +1,20 @@
 import React, { useState, useEffect, useRef } from 'react';
+
 import Board from './Board';
-import ShapeSelector from './ShapeSelector';
-import ScorePopup from './ScorePopup';
 import ComboCinematic from './ComboCinematic';
 import ReplayViewer from './ReplayViewer';
-import { createEmptyBoard, canPlaceShape, placeShape, findCompletedAreas, clearCompletedAreas, hasAnyValidPlacement, getAllValidPlacements, isBoardEmpty } from '../logic/board';
-import { getRandomShapes } from '../logic/shapes';
-import { calculateScore, getHighScore, setHighScore } from '../logic/scoring';
-import { computeComboVisuals } from '../utils/combo';
-import './Game.css';
+import ScorePopup from './ScorePopup';
+import ShapeSelector from './ShapeSelector';
 
-const cloneBoard = (grid) => grid.map(row => [...row]);
+import { calculateScore, getHighScore, setHighScore } from '../logic/scoring';
+import { canPlaceShape, clearCompletedAreas, createEmptyBoard, findCompletedAreas, getAllValidPlacements, hasAnyValidPlacement, isBoardEmpty, placeShape } from '../logic/board';
+import { getRandomShapes } from '../logic/shapes';
+
+import { computeComboVisuals } from '../utils/combo';
+import { playSound } from '../utils/sound';
+import { GAME } from '../utils/constants.js';
+
+import './Game.css';
 
 export default function Game() {
   const [board, setBoard] = useState(createEmptyBoard());
@@ -35,7 +39,6 @@ export default function Game() {
   const boardWrapperRef = useRef(null);
   const boardElRef = useRef(null);
   const dragOffsetRef = useRef(null);
-  const audioContextRef = useRef(null);
   const comboTimeoutRef = useRef(null);
 
   useEffect(() => {
@@ -84,7 +87,7 @@ export default function Game() {
     if (comboTimeoutRef.current) {
       clearTimeout(comboTimeoutRef.current);
     }
-    comboTimeoutRef.current = setTimeout(() => setComboEffect(null), 1600);
+    comboTimeoutRef.current = setTimeout(() => setComboEffect(null), GAME.COMBO_FADE_DURATION);
   };
 
   const recordReplayFrame = ({ boardState, shape, row, col, points, cleared, scoreAfter, areaCount, multiplier, comboBursts = null }) => {
@@ -93,7 +96,7 @@ export default function Game() {
       ...prev,
       {
         id: Date.now() + Math.random(),
-        board: cloneBoard(boardState),
+        board: boardState.map(row => [...row]),
         placedCells,
         points,
         scoreAfter,
@@ -273,77 +276,13 @@ export default function Game() {
     
     setTimeout(() => {
       setScorePopups(prev => prev.filter(p => p.id !== id));
-    }, 1500);
+    }, GAME.SCORE_POPUP_DURATION);
   };
 
   const handleReplayClose = () => {
     setShowReplay(false);
     setGameOver(false);
     setSuppressGameOver(true);
-  };
-
-  const ensureAudioContext = () => {
-    if (!audioContextRef.current) {
-      audioContextRef.current = new (window.AudioContext || window.webkitAudioContext)();
-    }
-    if (audioContextRef.current.state === 'suspended') {
-      audioContextRef.current.resume();
-    }
-    return audioContextRef.current;
-  };
-
-  const playSound = (type, options = {}) => {
-    const { multiplier = 1 } = options;
-    const context = ensureAudioContext();
-    const now = context.currentTime;
-
-    const playTone = (frequency, duration, delay = 0, volume = 0.08) => {
-      const oscillator = context.createOscillator();
-      const gain = context.createGain();
-
-      oscillator.type = 'sine';
-      oscillator.frequency.setValueAtTime(frequency, now + delay);
-
-      gain.gain.setValueAtTime(0, now + delay);
-      gain.gain.linearRampToValueAtTime(volume, now + delay + 0.02);
-      gain.gain.exponentialRampToValueAtTime(0.001, now + delay + duration);
-
-      oscillator.connect(gain);
-      gain.connect(context.destination);
-
-      oscillator.start(now + delay);
-      oscillator.stop(now + delay + duration + 0.05);
-    };
-
-    if (type === 'score') {
-      const base = 523.25; // C5
-      const excitement = Math.min(4, Math.max(1, multiplier));
-      const volume = Math.min(0.14, 0.07 + 0.015 * excitement);
-
-      // in C major
-      // base (90 pts): C5 + E5
-      playTone(base, 0.22, 0, volume);
-      playTone(base * 1.25, 0.18, 0.08, volume * 0.95);
-      
-      // 135+ pts: add G5
-      if (excitement >= 1.5) {
-        playTone(base * 1.5, 0.16, 0.16, volume * 0.9);
-      }
-      
-      // 225+ pts: add C6
-      if (excitement >= 2.5) {
-        playTone(base * 2, 0.14, 0.25, volume * 0.85);
-      }
-      
-      // 315+ pts: add G6
-      if (excitement >= 3.5) {
-        playTone(base * 3, 0.12, 0.35, volume * 0.8);
-      }
-      return;
-    }
-
-    // placement sound: G3 (196 Hz)
-    playTone(196, 0.14, 0, 0.07);
   };
 
   const handleRestart = () => {
@@ -366,7 +305,7 @@ export default function Game() {
     if (comboTimeoutRef.current) {
       clearTimeout(comboTimeoutRef.current);
     }
-    setTimeout(() => setResetting(false), 450);
+    setTimeout(() => setResetting(false), GAME.RESET_ANIMATION_DURATION);
   };
 
   return (

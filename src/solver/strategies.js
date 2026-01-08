@@ -14,7 +14,7 @@ export function greedyStrategy(board, shapes) {
       const { clearedCount } = clearCompletedAreas(testBoard, completed);
       const score = calculateScore(clearedCount, completed);
       
-      // Greedy: Always go for the highest immediate score
+      // greedy: always go for the highest immediate score
       if (score > bestScore) {
         bestScore = score;
         bestMove = { shape, row, col, score };
@@ -22,7 +22,7 @@ export function greedyStrategy(board, shapes) {
     }
   }
 
-  // If no scoring moves, pick any valid placement
+  // if no scoring moves, pick any valid placement
   if (!bestMove) {
     for (const shape of shapes) {
       const placements = getAllValidPlacements(board, shape);

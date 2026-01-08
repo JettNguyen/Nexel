@@ -1,13 +1,14 @@
 import React, { useRef, useEffect, useState } from 'react';
+import { BREAKPOINTS, GAME } from '../utils/constants.js';
 import './ShapePiece.css';
 
-export default function ShapePiece({ shape, disabled, onDragStart, onDragEnd, isDragging, position, offset }) {
+export default function ShapePiece({ shape, disabled, onDragStart, isDragging, position, offset }) {
   const computeSizes = () => {
     if (typeof window === 'undefined') {
       return { shelfCellSize: 18, shelfGap: 2, dragCellSize: 34, dragGap: 2 };
     }
 
-    const isMobile = window.innerWidth <= 500;
+    const isMobile = window.innerWidth <= BREAKPOINTS.MOBILE;
     const boardCell = Math.min(38, Math.max(28, (window.innerWidth - 56) / 9));
 
     const shelfScale = isMobile ? 0.6 : 0.7;
@@ -52,7 +53,7 @@ export default function ShapePiece({ shape, disabled, onDragStart, onDragEnd, is
       e.preventDefault();
       e.stopPropagation();
       const rect = pieceRef.current.getBoundingClientRect();
-      const isNarrow = window.innerWidth <= 640;
+      const isNarrow = window.innerWidth <= BREAKPOINTS.NARROW;
       const offsetX = rect.width / 2 + 5;
       const offsetY = isNarrow ? rect.height * 1.5 : rect.height / 2;
       if (onDragStart) {
@@ -73,8 +74,8 @@ export default function ShapePiece({ shape, disabled, onDragStart, onDragEnd, is
   const width = (maxCol + 1) * (cellSize + gap) - gap;
   const height = (maxRow + 1) * (cellSize + gap) - gap;
 
-  const viewportWidth = typeof window !== 'undefined' ? window.innerWidth : 1200;
-  const maxShelfDim = viewportWidth <= 500 ? 96 : 104; // fit comfortably inside padded container
+  const viewportWidth = typeof window !== 'undefined' ? window.innerWidth : BREAKPOINTS.LARGE;
+  const maxShelfDim = viewportWidth <= BREAKPOINTS.MOBILE ? 96 : 104; // fit comfortably inside padded container
   const targetDim = isDragging ? Infinity : maxShelfDim;
   const scale = Math.min(1, targetDim / Math.max(width, height));
   const renderWidth = scale < 1 ? width * scale : width;
