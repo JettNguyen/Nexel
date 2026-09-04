@@ -183,10 +183,19 @@
   transform: translate(-6px, -5px);
 }
 
-.sound-toggle:hover {
+@media (hover: hover) {
+  .sound-toggle:hover {
+    background: var(--accent-dim);
+    border-color: var(--accent);
+    transform: scale(1.03);
+  }
+}
+
+.sound-toggle:active {
   background: var(--accent-dim);
   border-color: var(--accent);
-  transform: scale(1.03);
+  transform: scale(0.94);
+  transition-duration: 0.05s;
 }
 
 .custom-select {
@@ -213,6 +222,12 @@
 
 .custom-select-toggle:hover {
   background: var(--bg-card);
+  border-color: var(--text-secondary);
+}
+
+.custom-select-toggle:active {
+  background: var(--bg-card);
+  transform: scale(0.99);
 }
 
 .custom-select.open .custom-select-toggle,
@@ -252,6 +267,8 @@
   border: 1px solid var(--border);
   border-radius: 8px;
   box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35);
+  max-height: min(320px, 50vh);
+  overflow-y: auto;
 }
 
 .custom-select-option {
@@ -270,48 +287,21 @@
   background: var(--bg-dark);
 }
 
+.custom-select-option:active {
+  background: var(--accent-dimmer);
+  transition-duration: 0.05s;
+}
+
 .custom-select-option.selected {
   color: var(--accent);
   background: rgba(255, 59, 108, 0.1);
 }
 
-.control-group input[type="range"] {
-  width: 100%;
-  height: 6px;
-  background: var(--bg-dark);
-  border-radius: 3px;
-  outline: none;
-  -webkit-appearance: none;
-}
-
-.control-group input[type="range"]::-webkit-slider-thumb {
-  width: 20px;
-  height: 20px;
-  background: var(--accent);
-  border: none;
-  border-radius: 50%;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
-  cursor: pointer;
-  -webkit-appearance: none;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.control-group input[type="range"]::-webkit-slider-thumb:hover {
-  transform: scale(1.2);
-}
-
-.control-group input[type="range"]::-moz-range-thumb {
-  width: 20px;
-  height: 20px;
-  background: var(--accent);
-  border: none;
-  border-radius: 50%;
-  cursor: pointer;
-  transition: transform 0.2s ease;
-}
-
-.control-group input[type="range"]::-moz-range-thumb:hover {
-  transform: scale(1.2);
+.strategy-description {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-secondary);
 }
 
 .control-buttons {
@@ -327,12 +317,19 @@
   background: var(--bg-dark);
   border: 1px solid var(--border);
   border-radius: 8px;
-  transition: background-color 0.2s ease, border-color 0.2s ease;
+  transition: background-color 0.2s ease, border-color 0.2s ease, transform 0.15s ease;
 }
 
 .control-buttons button:hover:not(:disabled) {
   background: var(--accent-dim);
   border-color: var(--accent);
+}
+
+.control-buttons button:active:not(:disabled) {
+  background: var(--accent-dim);
+  border-color: var(--accent);
+  transform: scale(0.97);
+  transition-duration: 0.05s;
 }
 
 .control-buttons button:disabled {
@@ -399,6 +396,7 @@
   display: flex;
   justify-content: center;
   gap: 12px;
+  flex-wrap: wrap;
 }
 
 .solver-modal-primary,
@@ -425,9 +423,22 @@
   filter: brightness(1.05);
 }
 
+.solver-modal-primary:active {
+  transform: scale(0.97);
+  filter: brightness(0.9);
+  transition-duration: 0.05s;
+}
+
 .solver-modal-secondary:hover {
   background: var(--bg-card);
+  border-color: var(--text-secondary);
   transform: translateY(-1px);
+}
+
+.solver-modal-secondary:active {
+  background: var(--accent-dimmer);
+  transform: scale(0.97);
+  transition-duration: 0.05s;
 }
 
 @media (max-width: 500px) {

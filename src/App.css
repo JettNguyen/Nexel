@@ -24,12 +24,17 @@
   letter-spacing: 0.05em;
   color: var(--text-secondary);
   border-radius: 8px;
-  transition: color 0.2s ease, background-color 0.2s ease;
+  transition: color 0.2s ease, background-color 0.2s ease, transform 0.15s ease;
 }
 
 .nav-link:hover {
   color: var(--text-primary);
   background: var(--bg-dark);
+}
+
+.nav-link:active {
+  transform: scale(0.97);
+  transition-duration: 0.05s;
 }
 
 .nav-link.active {

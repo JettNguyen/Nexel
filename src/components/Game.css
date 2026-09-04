@@ -112,9 +112,17 @@
   transform: translate(-6px, -5px);
 }
 
-.sound-toggle:hover {
+@media (hover: hover) {
+  .sound-toggle:hover {
+    background: var(--accent-dim);
+    transform: scale(1.05);
+  }
+}
+
+.sound-toggle:active {
   background: var(--accent-dim);
-  transform: scale(1.05);
+  transform: scale(0.94);
+  transition-duration: 0.05s;
 }
 
 .game-board {
@@ -240,14 +248,19 @@
   transition: background-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-.restart-button:hover {
-  background: #e01560;
-  transform: scale(1.02);
-  box-shadow: 0 8px 24px rgba(255, 27, 110, 0.4);
+@media (hover: hover) {
+  .restart-button:hover {
+    background: #e01560;
+    transform: scale(1.02);
+    box-shadow: 0 8px 24px rgba(255, 27, 110, 0.4);
+  }
 }
 
 .restart-button:active {
-  transform: translateY(0);
+  background: #c8124f;
+  transform: scale(0.98);
+  box-shadow: none;
+  transition-duration: 0.05s;
 }
 
 .restart-button.secondary {
@@ -258,10 +271,18 @@
   box-shadow: none;
 }
 
-.restart-button.secondary:hover {
-  background: rgba(255, 59, 108, 0.12);
+@media (hover: hover) {
+  .restart-button.secondary:hover {
+    background: rgba(255, 59, 108, 0.12);
+    color: white;
+    transform: scale(1.01);
+  }
+}
+
+.restart-button.secondary:active {
+  background: rgba(255, 59, 108, 0.24);
   color: white;
-  transform: scale(1.01);
+  transform: scale(0.98);
 }
 
 @media (max-width: 500px) {
@@ -290,8 +311,8 @@
   }
 
   .sound-toggle {
-    width: 36px;
-    height: 36px;
+    width: 40px;
+    height: 40px;
     font-size: 18px;
   }
 

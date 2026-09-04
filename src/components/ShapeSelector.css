@@ -19,8 +19,14 @@
   transition: all 0.2s ease;
 }
 
-.shape-container:has(.shape-piece:hover:not(.disabled):not(.dragging)) {
-  box-shadow: 0 4px 16px rgba(255, 27, 110, 0.15);
+@media (hover: hover) {
+  .shape-container:has(.shape-piece:hover:not(.disabled):not(.dragging)) {
+    box-shadow: 0 4px 16px rgba(255, 27, 110, 0.15);
+  }
+}
+
+.shape-container:has(.shape-piece:active:not(.disabled)) {
+  background: var(--accent-dimmer);
 }
 
 @media (max-width: 500px) {

@@ -174,16 +174,27 @@ export default function Game() {
         }
       }
 
+      endDrag();
+    };
+
+    // the browser took the pointer away (touch scroll, alert, tab switch): drop the piece
+    const handlePointerCancel = () => {
+      endDrag();
+    };
+
+    const endDrag = () => {
       setDragState(null);
       setHighlightCells([]);
       setHighlightAreas({ rows: [], cols: [], boxes: [] });
       document.removeEventListener('pointermove', handlePointerMove);
       document.removeEventListener('pointerup', handlePointerUp);
+      document.removeEventListener('pointercancel', handlePointerCancel);
       dragOffsetRef.current = null;
     };
 
     document.addEventListener('pointermove', handlePointerMove);
     document.addEventListener('pointerup', handlePointerUp);
+    document.addEventListener('pointercancel', handlePointerCancel);
   };
 
   const handlePlacement = (shape, row, col, boardRect) => {
