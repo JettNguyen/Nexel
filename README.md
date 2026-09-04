@@ -5,16 +5,21 @@ A strategic block placement puzzle game built with React and Vite.
 ## Features
 
 - **9x9 Board** with strategic placement mechanics
-- **Dynamic Shape System** with 30+ unique shape patterns
+- **Dynamic Shape System** with 35 unique shape patterns, including diagonals
 - **Smart Clearing** - Complete rows, columns, or 3x3 boxes to clear
 - **Combo Scoring** with multipliers for multiple clears
 - **Drag and Drop** with real-time validation and highlights
 - **Game Over Detection** when no valid placements remain
 - **High Score Tracking** with localStorage persistence
-- **Solver Mode** with three AI strategies:
-  - Greedy (maximize immediate score)
-  - Survival (maximize board openness)
+- **Solver Mode** with eight strategies:
+  - Score+ (maximize immediate score)
+  - Life+ (maximize board openness)
   - Hybrid (balanced approach)
+  - Win (chase a fully cleared board)
+  - Lookahead (search every order the current batch can be placed)
+  - Monte Carlo (simulate random futures after each candidate move)
+  - Mobility (maximize how many library pieces could still fit)
+  - Random (baseline)
 - **Auto-play** with adjustable speed
 - **Sound Toggle** for placement feedback
 
