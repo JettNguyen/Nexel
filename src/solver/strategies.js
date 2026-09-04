@@ -215,9 +215,9 @@ export function lookaheadStrategy(board, shapes) {
 
 // monte carlo: try the most promising moves, then play random futures
 // after each one and keep the move whose futures last longest
-const MC_CANDIDATES = 8;
-const MC_ROLLOUTS = 8;
-const MC_DEPTH = 15;
+const MC_CANDIDATES = 6;
+const MC_ROLLOUTS = 6;
+const MC_DEPTH = 12;
 
 function randomShapeBatch(count = 3) {
   const batch = [];
@@ -229,7 +229,7 @@ function randomShapeBatch(count = 3) {
 
 // quick playout policy: random piece, sample a few placements, keep the one
 // that clears the most and leaves the board most open
-const MC_SAMPLES = 8;
+const MC_SAMPLES = 24;
 
 function rolloutMove(board, queue) {
   const order = [...queue].sort(() => Math.random() - 0.5);

@@ -6,17 +6,19 @@ import ScorePopup from '../components/ScorePopup';
 
 import { clearCompletedAreas, createEmptyBoard, findCompletedAreas, hasAnyValidPlacement, isBoardEmpty, placeShape } from '../logic/board';
 import { getRandomShapes } from '../logic/shapes';
+import { calculateScore } from '../logic/scoring';
 
 import { STRATEGIES } from './strategies';
 
 import { computeComboVisuals } from '../utils/combo';
 import { playSound } from '../utils/sound';
+import { GAME, SOLVER } from '../utils/constants.js';
 
 import './Solver.css';
 
 export default function Solver() {
   const [board, setBoard] = useState(createEmptyBoard());
-  const [shapes, setShapes] = useState(() => getRandomShapes(3));
+  const [shapes, setShapes] = useState(() => getRandomShapes(SOLVER.SHAPES_PER_BATCH));
   const [score, setScore] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [speedMultiplier, setSpeedMultiplier] = useState(1);
@@ -37,6 +39,7 @@ export default function Solver() {
   const shapeRefs = useRef({});
   const strategySelectRef = useRef(null);
   const comboTimeoutRef = useRef(null);
+  const moveTimeoutRef = useRef(null);
 
   const renderShapeSvg = (shape, { boardScale = false, cellSize: overrideCellSize } = {}) => {
     const cellSize = boardScale ? (overrideCellSize || 42) : 16;
@@ -97,9 +100,8 @@ export default function Solver() {
     );
   };
 
-  const baseDelay = 800;
-  const speedDelay = baseDelay / speedMultiplier;
-  const animationDuration = Math.max(100, speedDelay * 0.7);
+  const speedDelay = SOLVER.BASE_DELAY / speedMultiplier;
+  const animationDuration = Math.max(SOLVER.MIN_ANIMATION_DURATION, speedDelay * 0.7);
 
   const boardCellSize = boardRef.current ? boardRef.current.getBoundingClientRect().width / 9 : 42;
 
@@ -140,6 +142,9 @@ export default function Solver() {
     if (comboTimeoutRef.current) {
       clearTimeout(comboTimeoutRef.current);
     }
+    if (moveTimeoutRef.current) {
+      clearTimeout(moveTimeoutRef.current);
+    }
   }, []);
 
   const triggerComboEffect = (areaCount, multiplier, visuals = null) => {
@@ -152,10 +157,68 @@ export default function Solver() {
     if (comboTimeoutRef.current) {
       clearTimeout(comboTimeoutRef.current);
     }
-    comboTimeoutRef.current = setTimeout(() => setComboEffect(null), 1600);
+    comboTimeoutRef.current = setTimeout(() => setComboEffect(null), GAME.COMBO_FADE_DURATION);
+  };
+
+  // commit a chosen move to the board, resolving clears and scoring
+  const applyMove = (shape, row, col, boardRect) => {
+    const newBoard = placeShape(board, shape, row, col);
+    const completed = findCompletedAreas(newBoard);
+    const areaCount = completed.rows.length + completed.cols.length + completed.boxes.length;
+    const hasCompletions = areaCount > 0;
+
+    let resultingBoard = newBoard;
+    let scoreMultiplier = 1;
+
+    if (hasCompletions) {
+      const { board: clearedBoard, clearedCount } = clearCompletedAreas(newBoard, completed);
+      const points = calculateScore(clearedCount, completed);
+      scoreMultiplier = areaCount >= 2 ? 1 + (areaCount - 1) * 0.5 : 1;
+      resultingBoard = clearedBoard;
+      setBoard(clearedBoard);
+      setScore(prev => prev + points);
+
+      if (boardRect) {
+        const cellSize = boardRect.width / 9;
+        const popupX = boardRect.left + col * cellSize + cellSize / 2;
+        const popupY = boardRect.top + row * cellSize + cellSize / 2;
+        addScorePopup(points, popupX, popupY);
+
+        if (areaCount >= 2) {
+          const comboVisual = computeComboVisuals(boardRect, completed, {
+            fallbackPoint: { x: popupX, y: popupY },
+          });
+          triggerComboEffect(areaCount, scoreMultiplier, comboVisual);
+        }
+      }
+    } else {
+      setBoard(newBoard);
+    }
+
+    if (soundEnabled) {
+      playSound(hasCompletions ? 'score' : 'place', { multiplier: scoreMultiplier });
+    }
+
+    setHighlightCells([]);
+
+    if (isBoardEmpty(resultingBoard)) {
+      setSolverWon(true);
+      setGameOver(true);
+      setIsPlaying(false);
+      return;
+    }
+
+    setShapes(prev => {
+      const filtered = prev.filter(s => s.id !== shape.id);
+      return filtered.length === 0 ? getRandomShapes(SOLVER.SHAPES_PER_BATCH) : filtered;
+    });
+    setMoveCount(prev => prev + 1);
   };
 
   const executeNextMove = () => {
+    // a piece is still in flight: let it land before choosing again
+    if (moveTimeoutRef.current) return;
+
     if (!hasAnyValidPlacement(board, shapes)) {
       setGameOver(true);
       setIsPlaying(false);
@@ -174,89 +237,42 @@ export default function Solver() {
     }
 
     const { shape, row, col } = move;
+    const shapeElement = shapeRefs.current[shape.id];
+    const boardElement = boardRef.current;
 
-    if (boardRef.current && shapeRefs.current[shape.id]) {
-      const shapeElement = shapeRefs.current[shape.id];
-      const boardElement = boardRef.current;
-      
-      const shapeRect = shapeElement.getBoundingClientRect();
-      const boardRect = boardElement.getBoundingClientRect();
-      
-      const cellSize = boardRect.width / 9;
-      const targetX = boardRect.left + col * cellSize;
-      const targetY = boardRect.top + row * cellSize;
-      
-      setDragAnimation({
-        shape,
-        startX: shapeRect.left,
-        startY: shapeRect.top,
-        endX: targetX,
-        endY: targetY,
-      });
-      
-      const previewCells = shape.cells.map(([dr, dc]) => [row + dr, col + dc]);
-      setHighlightCells(previewCells);
-
-      const popupX = targetX + cellSize / 2;
-      const popupY = targetY + cellSize / 2;
-
-      setTimeout(() => {
-        setDragAnimation(null);
-        
-        const newBoard = placeShape(board, shape, row, col);
-        const completed = findCompletedAreas(newBoard);
-
-        const hasCompletions = completed.rows.length > 0 || completed.cols.length > 0 || completed.boxes.length > 0;
-
-        let resultingBoard = newBoard;
-        let scoreMultiplier = 1;
-
-        if (hasCompletions) {
-          const { board: clearedBoard, clearedCount } = clearCompletedAreas(newBoard, completed);
-          const points = clearedCount * 10;
-          const areaCount = completed.rows.length + completed.cols.length + completed.boxes.length;
-          scoreMultiplier = areaCount >= 2 ? 1 + (areaCount - 1) * 0.5 : 1;
-          resultingBoard = clearedBoard;
-          setBoard(clearedBoard);
-          setScore(prev => prev + points);
-          addScorePopup(points, popupX, popupY);
-
-          if (areaCount >= 2) {
-            const comboVisual = computeComboVisuals(boardRect, completed, {
-              fallbackPoint: { x: popupX, y: popupY },
-            });
-            triggerComboEffect(areaCount, scoreMultiplier, comboVisual);
-          }
-        } else {
-          setBoard(newBoard);
-        }
-
-        if (soundEnabled) {
-          playSound(hasCompletions ? 'score' : 'place', { multiplier: scoreMultiplier });
-        }
-
-        if (isBoardEmpty(resultingBoard)) {
-          setSolverWon(true);
-          setGameOver(true);
-          setIsPlaying(false);
-          setHighlightCells([]);
-          return;
-        }
-
-        setShapes(prev => {
-          const filtered = prev.filter(s => s.id !== shape.id);
-          return filtered.length === 0 ? getRandomShapes(3) : filtered;
-        });
-
-        setMoveCount(prev => prev + 1);
-        setHighlightCells([]);
-      }, animationDuration);
+    if (!boardElement || !shapeElement) {
+      applyMove(shape, row, col, boardElement?.getBoundingClientRect() ?? null);
+      return;
     }
+
+    const shapeRect = shapeElement.getBoundingClientRect();
+    const boardRect = boardElement.getBoundingClientRect();
+    const cellSize = boardRect.width / 9;
+
+    setDragAnimation({
+      shape,
+      startX: shapeRect.left,
+      startY: shapeRect.top,
+      endX: boardRect.left + col * cellSize,
+      endY: boardRect.top + row * cellSize,
+    });
+    setHighlightCells(shape.cells.map(([dr, dc]) => [row + dr, col + dc]));
+
+    moveTimeoutRef.current = setTimeout(() => {
+      moveTimeoutRef.current = null;
+      setDragAnimation(null);
+      applyMove(shape, row, col, boardRect);
+    }, animationDuration);
   };
 
   const handleReset = () => {
+    if (moveTimeoutRef.current) {
+      clearTimeout(moveTimeoutRef.current);
+      moveTimeoutRef.current = null;
+    }
+    setDragAnimation(null);
     setBoard(createEmptyBoard());
-    setShapes(getRandomShapes(3));
+    setShapes(getRandomShapes(SOLVER.SHAPES_PER_BATCH));
     setScore(0);
     setMoveCount(0);
     setGameOver(false);
@@ -276,7 +292,7 @@ export default function Solver() {
   };
 
   const handleStep = () => {
-    if (!gameOver) {
+    if (!gameOver && !moveTimeoutRef.current) {
       executeNextMove();
     }
   };
@@ -287,7 +303,7 @@ export default function Solver() {
 
     setTimeout(() => {
       setScorePopups(prev => prev.filter(p => p.id !== id));
-    }, 1500);
+    }, GAME.SCORE_POPUP_DURATION);
   };
 
   return (
@@ -337,7 +353,13 @@ export default function Solver() {
           >
             <div 
               className="shape-preview"
-              ref={el => shapeRefs.current[shape.id] = el}
+              ref={el => {
+                if (el) {
+                  shapeRefs.current[shape.id] = el;
+                } else {
+                  delete shapeRefs.current[shape.id];
+                }
+              }}
             >
               {renderShapeSvg(shape)}
             </div>
@@ -421,6 +443,7 @@ export default function Solver() {
               </div>
             )}
           </div>
+          <p className="strategy-description">{STRATEGIES[strategy]?.description}</p>
         </div>
 
         <div className="control-group">
