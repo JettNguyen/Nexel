@@ -267,13 +267,16 @@
   border: 1px solid var(--border);
   border-radius: 8px;
   box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35);
-  max-height: min(320px, 50vh);
+  max-height: min(420px, 60vh);
   overflow-y: auto;
 }
 
 .custom-select-option {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
   width: 100%;
-  padding: 10px 12px;
+  padding: 9px 12px;
   text-align: left;
   color: var(--text-primary);
   background: transparent;
@@ -281,6 +284,21 @@
   border-radius: 6px;
   cursor: pointer;
   transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.custom-select-option-name {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.custom-select-option-description {
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--text-secondary);
+}
+
+.custom-select-option.selected .custom-select-option-description {
+  color: var(--accent-soft);
 }
 
 .custom-select-option:hover {

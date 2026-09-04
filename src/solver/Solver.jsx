@@ -426,7 +426,7 @@ export default function Solver() {
             </button>
             {strategyOpen && (
               <div className="custom-select-menu" role="listbox">
-                {Object.entries(STRATEGIES).map(([key, { name }]) => (
+                {Object.entries(STRATEGIES).map(([key, { name, description }]) => (
                   <button
                     key={key}
                     role="option"
@@ -437,7 +437,8 @@ export default function Solver() {
                       setStrategyOpen(false);
                     }}
                   >
-                    {name}
+                    <span className="custom-select-option-name">{name}</span>
+                    <span className="custom-select-option-description">{description}</span>
                   </button>
                 ))}
               </div>

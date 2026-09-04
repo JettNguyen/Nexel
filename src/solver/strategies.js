@@ -301,12 +301,12 @@ export function randomStrategy(board, shapes) {
 }
 
 export const STRATEGIES = {
-  greedy: { name: 'Score+', fn: greedyStrategy, description: 'Takes the highest-scoring move available right now.' },
-  survival: { name: 'Life+', fn: survivalStrategy, description: 'Keeps the board as open as possible.' },
-  hybrid: { name: 'Hybrid', fn: hybridStrategy, description: 'Balances immediate score against board openness.' },
-  win: { name: 'Win', fn: winStrategy, description: 'Chases a fully cleared board.' },
-  lookahead: { name: 'Lookahead', fn: lookaheadStrategy, description: 'Plans the whole batch: searches every order the three pieces could be placed.' },
-  montecarlo: { name: 'Monte Carlo', fn: monteCarloStrategy, description: 'Simulates random futures after each candidate and keeps the one that survives longest.' },
-  mobility: { name: 'Mobility', fn: mobilityStrategy, description: 'Maximises how many pieces from the library could still fit afterwards.' },
-  random: { name: 'Random', fn: randomStrategy, description: 'Baseline: any legal placement.' },
+  greedy: { name: 'Score+', fn: greedyStrategy, description: 'Takes whichever move scores the most points right now, ignoring what it leaves behind.' },
+  survival: { name: 'Life+', fn: survivalStrategy, description: 'Ignores points and picks the move that leaves the most open, connected empty space.' },
+  hybrid: { name: 'Hybrid', fn: hybridStrategy, description: 'Weighs immediate points against board openness, leaning slightly toward points.' },
+  win: { name: 'Win', fn: winStrategy, description: 'Hunts for a completely empty board: clears as many cells as it can every move.' },
+  lookahead: { name: 'Lookahead', fn: lookaheadStrategy, description: 'Tries every order the three pieces in hand could be placed and picks the sequence that ends best.' },
+  montecarlo: { name: 'Monte Carlo', fn: monteCarloStrategy, description: 'Plays out random future pieces after each candidate move and keeps the one that survives longest.' },
+  mobility: { name: 'Mobility', fn: mobilityStrategy, description: 'Counts how many pieces from the whole library could still fit afterwards and keeps that number high.' },
+  random: { name: 'Random', fn: randomStrategy, description: 'Picks any legal placement. A baseline to compare the others against.' },
 };
