@@ -21,7 +21,7 @@ export const GAME = {
 
 export const SOLVER = {
   BASE_DELAY: 800,
-  MIN_ANIMATION_DURATION: 100,
+  MIN_ANIMATION_DURATION: 40,
   SHAPES_PER_BATCH: 3,
 };
 

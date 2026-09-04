@@ -347,8 +347,8 @@ export default function Solver() {
             key={shape.id} 
             className="solver-shape"
             style={{
-              opacity: dragAnimation?.shape.id === shape.id ? 0.3 : 1,
-              transition: 'opacity 0.2s ease'
+              // the ghost is the only visible copy while a piece is in flight
+              visibility: dragAnimation?.shape.id === shape.id ? 'hidden' : 'visible',
             }}
           >
             <div 
@@ -452,8 +452,8 @@ export default function Solver() {
           <input
             type="range"
             min="0.5"
-            max="5"
-            step="0.1"
+            max="20"
+            step="0.5"
             value={speedMultiplier}
             onChange={(e) => setSpeedMultiplier(Number(e.target.value))}
           />
